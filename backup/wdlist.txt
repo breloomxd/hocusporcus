@@ -1,0 +1,120 @@
+lista de regras do warden
+
+#moderation rules
+-def wd add
+name: mass-mention
+rank: 2
+event: on-message
+if:
+  - message-has-more-than-mentions: 5
+do:
+  - delete-user-message:
+  - add-user-heatpoints: [3, 1h]
+  - send-dm: [$user_id, "Please don't mass mention users. Your message was deleted."]
+
+
+-def wd add
+name: xiao
+rank: 1
+event: on-message
+if:
+  - message-matches-any: ["xiao"]
+do:
+  - send-message: [$channel_id, "Oi $user_mention! **Xiao está indisponível no momento!**  
+Se for algo urgente, entre em contato com outro membro da staff para que a mensagem seja repassada. Obrigado pela compreensão! 😊."]
+
+
+-def wd add
+rank: 4
+name: no-attachments-rank4
+event: [on-message, on-message-edit]
+if:
+  - message-has-attachment: true
+do:
+  - delete-user-message:
+  - send-message: [$channel_id, "$user_mention Desculpe, você não tem permissão para enviar anexos."]
+  - notify-staff:
+      title: "Anexo removido"
+      content: "Um novo usuário tentou enviar um anexo"
+      jump_to_ctx_message: true
+      add_ctx_fields: true
+      no_repeat_for: 30 seconds
+      no_repeat_key: $rule_name-1
+
+
+
+#fun rules
+-def wd add
+name: xiudavid
+rank: 1
+event: on-message
+if:
+  - display-name-matches-any: ["*david*"]
+do:
+  - delete-user-message:
+  - send-message: [$channel_id, "XIU $user_mention"]
+
+
+rank: 2
+name: botoi
+event: on-message
+if:
+  - message-matches-any: ["oi"]
+  - custom-heat-is: ["$rule_name", 0]
+do:
+  - add-custom-heatpoint: ["$rule_name", 55 minutes]
+  - send-message: [$channel_id, "Oi $user_mention"]
+
+
+-def wd add
+rank: 1
+name: faz-o-x
+event: on-message
+if:
+  - message-matches-regex: "(?i)faz o l\\b"
+do:
+  - send-message:
+      id: $channel_id
+      content: "$user_mention **Faz o X**"
+
+#basic rules
+
+
+
+#test rules
+
+-def wd add
+rank: 4
+name: test
+event: on-message
+if:
+  - message-matches-any: [test]
+do:
+  - send-message:
+      id: $channel_id
+      content: message content
+      author_name: $user
+      author_url: $user_avatar_url
+      author_icon_url: $user_avatar_url
+      title: 您是否曾經想過如果使用所有嵌入式選項會發生什麼？
+      description: "科學走得太遠了嗎？"
+      footer_text: "Frogus Proteção Automática"
+      footer_icon_url: $user_avatar_url
+      image: $user_avatar_url
+      add_timestamp: true
+      thumbnail: $user_avatar_url
+      url: $user_avatar_url
+      color: 0x59FF00
+      fields: [{name: 一些, value: 可能}, {name: 思考, value: 所以, inline: false}]
+      ping_on_reply: true
+
+
+name: basic-word-filter
+rank: 2
+event: on-message
+if:
+  - message-matches-any: ["*badword1*", "*badword2*", "*slur*"]
+do:
+  - delete-user-message:
+  - send-dm: [$user_id, "Your message was deleted for containing prohibited language. Please review our rules."]
+  - add-user-heatpoint: 1h
