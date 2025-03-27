@@ -1,0 +1,7 @@
+{
+    "author": ["HocusFrogus"],
+    "description": "Um jogo de bandeiras.",
+    "install_msg": "Obrigado por instalar Guess The Flag! Use `[p]guessflag` para jogar.",
+    "short": "Jogo de bandeiras",
+    "requirements": []
+}
