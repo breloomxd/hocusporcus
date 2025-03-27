@@ -1,44 +1,19 @@
-°def wd add
-name: xiao
-rank: 1
+lista de regras do warden
+
+#moderation rules
+-def wd add
+name: mass-mention
+rank: 2
 event: on-message
 if:
-  - message-matches-any: ["xiao"]
+  - message-contains-more-than-unique-mentions: 5
 do:
   - delete-user-message:
-  - send-message: [$channel_id, "Oi $user_mention! O Xiao está indisponivel no momento."]
+  - add-user-heatpoints: [3, 1h]
+  - send-message: [$user_id, "Por favor, não mencione usuários em massa. Sua mensagem foi excluída."]
 
 
-
-°def wd add
-rank: 1
-name: test
-event: on-message
-if:
-  - message-matches-any: [test]
-do:
-  - send-message:
-      id: $channel_id
-      content: message content # content of the message
-      author_name: $user
-      author_url: $user_avatar_url
-      author_icon_url: $user_avatar_url
-      title: Have you ever wondered what happens if you use all the embed options?
-      description: "Has science gone too far?" # description of the embed
-      footer_text: "Frogus Proteção Automática"
-      footer_icon_url: $user_avatar_url
-      image: $user_avatar_url
-      add_timestamp: true # Add the current date / time to the embed
-      thumbnail: $user_avatar_url
-      url: $user_avatar_url
-      color: 0x59FF00 # Use a HTML color picker for this, with due adjustments: #59FF00 -> 0x59FF00
-      fields: [{name: Some, value: might}, {name: think, value: so, inline: false}] # These are the embed fields, you can add more than 2... Or fewer.
-      ping_on_reply: true # Whether to ping on reply or not
-
-
-
-
-°def wd add
+-def wd add
 name: xiao
 rank: 1
 event: on-message
@@ -49,122 +24,7 @@ do:
 Se for algo urgente, entre em contato com outro membro da staff para que a mensagem seja repassada. Obrigado pela compreensão! 😊."]
 
 
-
-
-
-°def wd add
-rank: 1
-name: template
-event: on-message
-if:
-  - message-matches-any: [test]
-do:
-  - send-message:
-      id: $channel_id
-      content: "$user_mention, sua mensagem foi processada automaticamente."
-      author_name: "📢 Notificação Automática"
-      author_url: $user_avatar_url
-      author_icon_url: $user_avatar_url
-      title: "🔍 Detecção Automática Ativada"
-      description: "Esta mensagem foi gerada automaticamente pelo sistema de proteção do servidor."
-      footer_text: "🔒 Protegido por Frogus"
-      footer_icon_url: "https://img.pokemondb.net/sprites/scarlet-violet/normal/froakie.png"
-      image: "https://img.pokemondb.net/sprites/scarlet-violet/normal/froakie.png"
-      add_timestamp: true
-      thumbnail: "https://img.pokemondb.net/sprites/scarlet-violet/normal/froakie.png"
-      url: "teste regras"
-      color: 0xFFA500
-      fields: [{name: Some, value: might}, {name: think, value: so, inline: false}]
-      ping_on_reply: true
-
-
-
-°def wd add
-rank: 2
-name: mention-ban-rank2
-event: [on-message]
-if:
-  - message-contains-more-than-unique-mentions: 10
-do:
-  - ban-user-and-delete: 1
-  - send-mod-log: "Usuário banido por mencionar muitas pessoas."
-
-
-
-rank: 2
-name: bad-word
-priority: 1
-event: on-message
-if:
-  - message-matches-any: ["*b?d w?rd*"]
-do:
-  - delete-user-message:
-  - send-message: [$channel_id, "Sem palavra ruim aqui!"]
-  - add-user-heatpoint: 1h
-
-
-
-
-rank: 2
-name: check-heat
-event: on-message
-if:
-  - user-heat-is: 25
-do:
-  - kick-user:
-
-
-
-
-rank: 3
-name: filter
-event: on-message
-if:
-  - message-matches-any: ["*puta*", "*words*"]
-do:
-  - add-custom-heatpoint: ["filter-$user_id", 5 minutes]
-  - custom-heat-more-than: ["filter-$user_id", 4] # check if the user triggered this rule 5 or more times
-  - if-true: # if they did, ban them
-      - ban-user-and-delete: 0
-  - delete-user-message: # and proceed to delete the message in any case, ban or not
-
-
-
-rank: 2
-name: botoi
-event: on-message
-if:
-  - message-matches-any: ["oi"]
-  - custom-heat-is: ["$rule_name", 0]
-do:
-  - add-custom-heatpoint: ["$rule_name", 25 minutes]
-  - send-message: [$channel_id, "Oi $user_mention"]
-
-°def wd add
-rank: 2
-name: testxiao
-event: [on-message]
-if:
-  - message-contains-word: ["xiaotst"]
-do:
-  - if-all:
-    - user-heat-is: 20
-  - if-true:
-    - add-user-heatpoints: [10, 1m]
-    - delete-user-message:
-    - send-message: 
-        id: 1340892812010590301
-        title: "Warning." 
-        description: "Frogus tomou medidas automaticamente contra um usuário." 
-        content: 
-        author_name: $user
-        thumbnail: $user_avatar_url
-        add_timestamp: true
-    - send-message: [$user_id, Eu executei a regra.]    
-    - timeout-user: 10 minutes
-    - exit:
-
-°def wd add
+-def wd add
 rank: 4
 name: no-attachments-rank4
 event: [on-message, on-message-edit]
@@ -182,164 +42,20 @@ do:
       no_repeat_key: $rule_name-1
 
 
-rank: 2
-name: testxiao
-event: [on-message]
-if:
-  - message-contains-word: ["xiaotst"]
-do:
-  - if-all:
-    - user-heat-is: 20
-  - if-true:
-    - add-user-heatpoints: [10, 1m]
-    - delete-user-message:
-    - send-message: 
-      id: 1340892812010590301
-      title: "Warning." 
-      description: "Frogus tomou medidas automaticamente contra um usuário." 
-      content: 
-      author_name: $user
-      thumbnail: $user_avatar_url
-      add_timestamp: true
-    - send-message: [$user_id, Eu executei a regra.]    
-    - timeout-user: 10 minutes
-    - exit:
 
-
-
-°def wd add
-name: xiao
+#fun rules
+-def wd add
+name: xiudavid
 rank: 1
 event: on-message
 if:
-  - message-matches-any: ["xiao"]
+  - display-name-matches-any: ["*david*"]
 do:
   - delete-user-message:
-  - send-message: [$channel_id, "Oi $user_mention! O Xiao está indisponivel no momento."]
-
-
-
-°def wd add
-rank: 1
-name: test
-event: on-message
-if:
-  - message-matches-any: [test]
-do:
-  - send-message:
-      id: $channel_id
-      content: message content # content of the message
-      author_name: $user
-      author_url: $user_avatar_url
-      author_icon_url: $user_avatar_url
-      title: Have you ever wondered what happens if you use all the embed options?
-      description: "Has science gone too far?" # description of the embed
-      footer_text: "Frogus Proteção Automática"
-      footer_icon_url: $user_avatar_url
-      image: $user_avatar_url
-      add_timestamp: true # Add the current date / time to the embed
-      thumbnail: $user_avatar_url
-      url: $user_avatar_url
-      color: 0x59FF00 # Use a HTML color picker for this, with due adjustments: #59FF00 -> 0x59FF00
-      fields: [{name: Some, value: might}, {name: think, value: so, inline: false}] # These are the embed fields, you can add more than 2... Or fewer.
-      ping_on_reply: true # Whether to ping on reply or not
-
-
-
-
-°def wd add
-name: xiao
-rank: 1
-event: on-message
-if:
-  - message-matches-any: ["xiao"]
-do:
-  - send-message: [$channel_id, "Oi $user_mention! **Xiao está indisponível no momento!**  
-Se for algo urgente, entre em contato com outro membro da staff para que a mensagem seja repassada. Obrigado pela compreensão! 😊."]
-
-
-
-
-
-°def wd add
-rank: 1
-name: template
-event: on-message
-if:
-  - message-matches-any: [test]
-do:
-  - send-message:
-      id: $channel_id
-      content: "$user_mention, sua mensagem foi processada automaticamente."
-      author_name: "📢 Notificação Automática"
-      author_url: $user_avatar_url
-      author_icon_url: $user_avatar_url
-      title: "🔍 Detecção Automática Ativada"
-      description: "Esta mensagem foi gerada automaticamente pelo sistema de proteção do servidor."
-      footer_text: "🔒 Protegido por Frogus"
-      footer_icon_url: "https://img.pokemondb.net/sprites/scarlet-violet/normal/froakie.png"
-      image: "https://img.pokemondb.net/sprites/scarlet-violet/normal/froakie.png"
-      add_timestamp: true
-      thumbnail: "https://img.pokemondb.net/sprites/scarlet-violet/normal/froakie.png"
-      url: "teste regras"
-      color: 0xFFA500
-      fields: [{name: Some, value: might}, {name: think, value: so, inline: false}]
-      ping_on_reply: true
-
-
-
-°def wd add
-rank: 2
-name: mention-ban-rank2
-event: [on-message]
-if:
-  - message-contains-more-than-unique-mentions: 10
-do:
-  - ban-user-and-delete: 1
-  - send-mod-log: "Usuário banido por mencionar muitas pessoas."
-
+  - send-message: [$channel_id, "XIU $user_mention"]
 
 
 rank: 2
-name: bad-word
-priority: 1
-event: on-message
-if:
-  - message-matches-any: ["*b?d w?rd*"]
-do:
-  - delete-user-message:
-  - send-message: [$channel_id, "Sem palavra ruim aqui!"]
-  - add-user-heatpoint: 1h
-
-
-
-
-rank: 2
-name: check-heat
-event: on-message
-if:
-  - user-heat-is: 25
-do:
-  - kick-user:
-
-
-
-
-rank: 3
-name: filter
-event: on-message
-if:
-  - message-matches-any: ["*puta*", "*words*"]
-do:
-  - add-custom-heatpoint: ["filter-$user_id", 5 minutes]
-  - custom-heat-more-than: ["filter-$user_id", 4] # check if the user triggered this rule 5 or more times
-  - if-true: # if they did, ban them
-      - ban-user-and-delete: 0
-  - delete-user-message: # and proceed to delete the message in any case, ban or not
-
-
-°def wd add
-rank: 1
 name: botoi
 event: on-message
 if:
@@ -350,12 +66,55 @@ do:
   - send-message: [$channel_id, "Oi $user_mention"]
 
 
+-def wd add
 rank: 1
-name: bombot
+name: faz-o-x
 event: on-message
 if:
-  - message-matches-any: ["bom bot"]
-  - custom-heat-is: ["$rule_name", 0]
+  - message-matches-regex: "(?i)faz o l\\b"
 do:
-  - add-custom-heatpoint: ["$rule_name", 55 minutes]
-  - send-message: [$channel_id, "Oi $user_mention"]
+  - send-message:
+      id: $channel_id
+      content: "$user_mention **Faz o X**"
+
+#basic rules
+
+
+
+#test rules
+
+-def wd add
+rank: 4
+name: test
+event: on-message
+if:
+  - message-matches-any: [test]
+do:
+  - send-message:
+      id: $channel_id
+      content: message content
+      author_name: $user
+      author_url: $user_avatar_url
+      author_icon_url: $user_avatar_url
+      title: 您是否曾經想過如果使用所有嵌入式選項會發生什麼？
+      description: "科學走得太遠了嗎？"
+      footer_text: "Frogus Proteção Automática"
+      footer_icon_url: $user_avatar_url
+      image: $user_avatar_url
+      add_timestamp: true
+      thumbnail: $user_avatar_url
+      url: $user_avatar_url
+      color: 0x59FF00
+      fields: [{name: 一些, value: 可能}, {name: 思考, value: 所以, inline: false}]
+      ping_on_reply: true
+
+
+name: basic-word-filter
+rank: 2
+event: on-message
+if:
+  - message-matches-any: ["*badword1*", "*badword2*", "*slur*"]
+do:
+  - delete-user-message:
+  - send-dm: [$user_id, "Your message was deleted for containing prohibited language. Please review our rules."]
+  - add-user-heatpoint: 1h
