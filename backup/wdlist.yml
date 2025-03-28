@@ -77,38 +77,38 @@ do:
       id: $channel_id
       content: "$user_mention **Faz o X**"
 
+-def wd add
+rank: 1
+name: bom-dia
+event: on-message
+if:
+  - message-matches-any: ["bom dia", "bomdia"]
+  - custom-heat-is: ["$rule_name", 0]
+do:
+  - add-custom-heatpoint: ["$rule_name", 24 hours]
+  - send-message:
+      id: $channel_id
+      content: "BOM DIA $user_mention!"
+
+-def wd add
+rank: 1
+name: boa-noite
+event: on-message
+if:
+  - message-matches-any: ["boa noite"]
+  - custom-heat-is: ["$rule_name", 0]
+do:
+  - add-custom-heatpoint: ["$rule_name", 24 hours]
+  - send-message:
+      id: $channel_id
+      content: "Boa Noite $user_mention!"
+
+
 #basic rules
 
 
 
 #test rules
-
--def wd add
-rank: 4
-name: test
-event: on-message
-if:
-  - message-matches-any: [test]
-do:
-  - send-message:
-      id: $channel_id
-      content: message content
-      author_name: $user
-      author_url: $user_avatar_url
-      author_icon_url: $user_avatar_url
-      title: 您是否曾經想過如果使用所有嵌入式選項會發生什麼？
-      description: "科學走得太遠了嗎？"
-      footer_text: "Frogus Proteção Automática"
-      footer_icon_url: $user_avatar_url
-      image: $user_avatar_url
-      add_timestamp: true
-      thumbnail: $user_avatar_url
-      url: $user_avatar_url
-      color: 0x59FF00
-      fields: [{name: 一些, value: 可能}, {name: 思考, value: 所以, inline: false}]
-      ping_on_reply: true
-
-
 name: basic-word-filter
 rank: 2
 event: on-message
@@ -118,3 +118,82 @@ do:
   - delete-user-message:
   - send-dm: [$user_id, "Your message was deleted for containing prohibited language. Please review our rules."]
   - add-user-heatpoint: 1h
+
+
+-def wd add
+name: whois
+rank: 1
+event: on-message
+if:
+  - message-matches-any: ["Frogus quem sou eu"]
+do:
+  - get-user-info:
+      id: $user_id
+      mapping:
+        message_count: message_count
+        joined: joined_at
+        created: created_at
+        is_staff: is_staff
+        rank: rank
+  - send-message:
+      id: $channel_id
+      title: "Informações do Usuário"
+      description: "Aqui estão suas informações, $user_mention!"
+      color: 0x59FF00
+      author_name: "$user_display"
+      author_icon_url: $user_avatar_url
+      thumbnail: $user_avatar_url
+      footer_text: "FrogusBot AutoModules"
+      add_timestamp: true
+      fields:
+        - {name: "Contagem de Mensagens", value: "$message_count", inline: true}
+        - {name: "Rank", value: "$rank", inline: true}
+        - {name: "Staff?", value: "$is_staff", inline: true}
+        - {name: "Entrou no Servidor", value: "$joined", inline: false}
+        - {name: "Conta Criada", value: "$created", inline: false}
+
+
+-def wd add
+rank: 2
+name: anti-flood
+event: on-message
+if:
+  - message-matches-regex: "(.)\\1{16,}"
+do:
+  - delete-user-message:
+  - send-message:
+      id: $channel_id
+      content: "$user_mention, sem flood, por favor!"
+
+
+
+-def wd add
+name: anti-hoist
+rank: 1
+event: [on-user-join, periodic, manual]
+run-every: 60 minutes
+if:
+  - if-any:
+      - display-name-matches-any: ["#*","!*", "[?*]", "[*]*", ".*", "_*", "-*", "'*", "\"*", ":*", ";*", ",*", "~*", "`*", "^*", ">*", "<*", "|*", "/*", "\\*"]
+  - if-not:
+      - is-staff: true
+do:
+  - set-user-nickname: "Steve"
+  - notify-staff:
+      title: "Usuário Dehoistado"
+      content: "$user ($user_id) tentou hoistar com caracteres especiais"
+      add_ctx_fields: true
+      jump_to_ctx_message: true
+
+
+
+-def wd add
+rank: 2
+name: anti-capslock
+event: on-message
+if:
+  - message-matches-regex: "[A-Z]{10,}"
+do:
+  - send-message:
+      id: $channel_id
+      content: "$user_mention, pare de gritar! 😡"
