@@ -1,7 +1,111 @@
-analyze the following to learn what I already have and whats possible
-lista de regras do warden
 
 #moderation rules
+-def wd add
+name: anti-xiao-mention-spam
+rank: 2
+event: on-message
+if:
+  - message-matches-any: ["<@1044294587419721768>"]
+  - is-staff: false
+do:
+  - add-custom-heatpoint: ["xiao-mention-$user_id", "30 minutes"]
+  - custom-heat-is: ["xiao-mention-$user_id", 2]
+  - if-true:
+      - send-message:
+          id: $channel_id
+          content: "$user_mention, Xiao vai aparecer, não há necessidade de menções extras ou você será silenciado."
+  - custom-heat-is: ["xiao-mention-$user_id", 3]
+  - if-true:
+      - timeout-user: "1 hour"
+      - send-message:
+          id: $channel_id
+          content: "$user_mention foi silenciado por 1 hora por mencionar o Xiao excessivamente."
+      - notify-staff: "User $user ($user_id) silenciado por 1 hora devido ao excesso de menções ao Xiao no $channel_mention."
+      - empty-custom-heat: "xiao-mention-$user_id"
+
+
+-def wd add
+name: xiao-mention-tracker
+rank: 1
+event: on-message
+if:
+  - message-matches-any: ["xiao"]
+do:
+  - add-custom-heatpoint: ["xiao-ping-$user_id", "30 seconds"]
+  - custom-heat-is: ["xiao-ping-$user_id", 2]
+  - if-true:
+      - send-message: [$channel_id, "$user_mention, Xiao geralmente não presta muita atenção ao discórd. Entre em contato com outro staff se for urgente."]
+  - custom-heat-is: ["xiao-ping-$user_id", 3]
+  - if-true:
+      - send-message: [$channel_id, "$user_mention, É algo sério de verdade? Por favor responda exatamente 'sim' se for realmente urgente."]
+      - add-custom-heatpoint: ["xiao-confirm-$user_id", "2 minutes"]
+  - custom-heat-more-than: ["xiao-ping-$user_id", 3]
+  - if-true:
+      - empty-custom-heat: "xiao-ping-$user_id"
+      - send-message: [$channel_id, "$user_mention, Responda 'sim' apenas se sua mensagem anterior exigir a atenção urgente do Xiao."]
+
+-def wd add
+name: xiao-mention-confirm
+rank: 1
+priority: 5
+event: on-message
+if:
+  - custom-heat-is: ["xiao-confirm-$user_id", 1]
+  - message-matches-any: ["sim"]
+do:
+  - send-message: [$channel_id, "Okay, $user_mention, <@1044294587419721768> socorro estou me afogando."]
+  - empty-custom-heat: "xiao-confirm-$user_id"
+  - empty-custom-heat: "xiao-ping-$user_id"
+
+
+
+
+-def wd add
+name: prevent-staff-impersonation
+rank: 2
+event: [on-user-join, periodic, manual]
+run-every: 30 minutes
+if:
+  - is-staff: false
+  - display-name-matches-any: ["*Admin*", "*Staff*", "*Moderator*", "*Xiao*", "*Ghost*", "*GHOST*"]
+do:
+  - set-user-nickname: "$user_name"
+  - send-message:
+      id: $channel_id
+      content: "$user_mention Seu nick foi redefinido porque parecia personificar a staff ou a familia Ghost."
+  - notify-staff: "User $user ($user_id) teve o nick '$user_display' redefinido por suspeita de personificação da staff."
+
+
+-def wd add
+name: flood-add-heat
+rank: 2
+priority: 1
+event: on-message
+if:
+  - is-staff: false
+do:
+  - add-user-heatpoint: "10 seconds"
+
+
+
+-def wd add
+name: flood-check-action
+rank: 2
+priority: 2
+event: on-message
+if:
+  - is-staff: false
+  - user-heat-more-than: 5
+do:
+  - timeout-user: "5 minutes"
+  - send-message:
+      id: $channel_id
+      content: "$user_mention, Você está enviando mensagens muito rapidamente! Mutado por 5 minutes."
+  - notify-staff: "User $user ($user_id) mutado por flood de mensagens em $channel_mention."
+  - empty-user-heat:
+
+
+
 -def wd add
 name: mass-mention
 rank: 2
@@ -14,15 +118,50 @@ do:
   - send-message: [$user_id, "Por favor, não mencione usuários em massa. Sua mensagem foi excluída."]
 
 
+
 -def wd add
-name: xiao
-rank: 1
-event: on-message
+name: new-member-link-restrict
+rank: 2
+event: [on-message, on-message-edit]
 if:
-  - message-matches-any: ["xiao"]
+  - user-joined-less-than: "1 day"
+  - is-staff: false
+  - if-any:
+      - message-contains-invite: true
+      - message-has-attachment: true
+      - if-all:
+          - message-contains-url: true
+          - if-not:
+              - message-matches-any: ["*tenor.com/*", "*c.tenor.com/*"]
 do:
-  - send-message: [$channel_id, "Oi $user_mention! **Xiao está indisponível no momento!**  
-Se for algo urgente, entre em contato com outro membro da staff para que a mensagem seja repassada. Obrigado pela compreensão! 😊."]
+  - delete-user-message:
+  - send-message:
+      id: $channel_id
+      content: "Oi $user_mention! Durante o seu primeiro dia, a publicação de links ou anexos é restrita para evitar spam. Por favor, tente novamente mais tarde."
+  - add-user-heatpoint: "6 hours"
+  - user-heat-is: 3
+  - if-true:
+      - notify-staff:
+          title: "Advertência para Novo Membro"
+          content: "Usuário $user ($user_id) recebeu advertência por postar links/anexos repetidamente (< 1 dia de conta). Heat atual: $user_heat."
+          add_ctx_fields: true
+      - add-roles-to-user: ["Advertência"]
+      - send-message:
+          id: $channel_id
+          content: "$user_mention você continuou postando conteúdo restrito durante seu período inicial e recebeu uma advertência formal. Por favor, revise as regras do servidor."
+  - user-heat-more-than: 2
+  - if-true:
+      - timeout-user: "1 hour"
+      - notify-staff:
+          title: "Timeout para Novo Membro"
+          content: "Usuário $user ($user_id) foi silenciado por 1 hora por ignorar advertências sobre postagem de links/anexos."
+          add_ctx_fields: true
+
+
+
+-def wd add
+
+
 
 
 -def wd add
@@ -33,7 +172,9 @@ if:
   - message-has-attachment: true
 do:
   - delete-user-message:
-  - send-message: [$channel_id, "$user_mention Desculpe, você não tem permissão para enviar anexos."]
+  - send-message:
+      id: $channel_id
+      content: "📎 $user_mention | **Anexo bloqueado!**\nVocê precisa ter 48+ horas no servidor para enviar arquivos.\n\n • Mensagem removida"
   - notify-staff:
       title: "Anexo removido"
       content: "Um novo usuário tentou enviar um anexo"
@@ -56,6 +197,7 @@ do:
   - send-message: [$channel_id, "XIU $user_mention"]
 
 
+
 rank: 2
 name: botoi
 event: on-message
@@ -65,6 +207,8 @@ if:
 do:
   - add-custom-heatpoint: ["$rule_name", 55 minutes]
   - send-message: [$channel_id, "Oi $user_mention"]
+
+
 
 
 -def wd add
@@ -77,6 +221,8 @@ do:
   - send-message:
       id: $channel_id
       content: "$user_mention **Faz o X**"
+
+
 
 -def wd add
 rank: 1
@@ -91,6 +237,8 @@ do:
       id: $channel_id
       content: "BOM DIA $user_mention!"
 
+
+
 -def wd add
 rank: 1
 name: boa-noite
@@ -104,6 +252,43 @@ do:
       id: $channel_id
       content: "Boa Noite $user_mention!"
 
+
+
+-def wd add
+name: fakecompliment-bot
+rank: 1
+event: on-message
+if:
+  - message-matches-any: ["Frogus me elogie", "!elogio"]
+  - custom-heat-is: ["$user_id", 0]
+do:
+  - add-custom-heatpoint: ["$user_id", 2 minutes]
+  - var-assign-random: [compliment, [
+      "Tu é o tipo de pessoa que faz o silêncio parecer barulhento.",
+      "Você constrói melhor que um villager bêbado!",
+      "Nunca vi alguém tão confiante sem motivo algum!",
+      "Sua autoestima é inspiradora... e totalmente infundada.",
+      "Tem o charme de um creeper e a delicadeza de um ghast.",
+      "Sua presença é como redstone: complicada e desnecessária.",
+      "Como você faz pra ser tão... assim?",
+      "Você treina pra ser burro desse jeito ou já nasceu assim?",
+      "Admiro como você supera expectativas... negativas.",
+      "Você é a solução para problemas que ninguém tem.",
+      "Você desafia as leis da lógica diariamente.",
+      "Obrigado por existir... agora temos um exemplo do que não fazer.",
+      "Valeu por lembrar que a evolução tem lapsos.",
+      "Você domina a arte de falar muito sem dizer nada.",
+      "Seu talento pra coisas inúteis é impressionante.",
+      "Ninguém supera você em... você sabe fazer alguma coisa?",
+      "Quando você não aparece o dia é melhor!",
+      "Ta querendo me dar meu fi?"
+    ]]
+  - send-message:
+      id: $channel_id
+      title: "🏆 Elogio Premium 🏆"
+      description: "$user_mention\n**$compliment**"
+      color: 0xFFD700
+      footer_text: "Serviço de elogios duvidosos • Cooldown: 2min"
 
 #basic rules
 
@@ -121,13 +306,16 @@ do:
   - add-user-heatpoint: 1h
 
 
+
 -def wd add
 name: whois
 rank: 1
 event: on-message
 if:
-  - message-matches-any: ["Frogus quem sou eu"]
+  - message-matches-any: ["!whois"]
+  - custom-heat-is: ["$user_id", 0]
 do:
+  - add-custom-heatpoint: ["$user_id", 5 minutes]
   - get-user-info:
       id: $user_id
       mapping:
@@ -154,6 +342,8 @@ do:
         - {name: "Conta Criada", value: "$created", inline: false}
 
 
+
+
 -def wd add
 rank: 2
 name: anti-flood
@@ -168,6 +358,7 @@ do:
 
 
 
+
 -def wd add
 name: anti-hoist
 rank: 1
@@ -179,7 +370,7 @@ if:
   - if-not:
       - is-staff: true
 do:
-  - set-user-nickname: "Steve"
+  - set-user-nickname: "$user_name"
   - notify-staff:
       title: "Usuário Dehoistado"
       content: "$user ($user_id) tentou hoistar com caracteres especiais"
@@ -189,12 +380,202 @@ do:
 
 
 -def wd add
+name: anti-hoist-v2
 rank: 2
-name: anti-capslock
+event: [on-user-join, periodic, manual]
+run-every: 60 minutes
+if:
+  - is-staff: false
+  - display-name-matches-regex: '^[^a-zA-Z0-9].*'
+do:
+  - var-assign: [original_nick, "$user_nickname"]  # Cria uma variável para manter o apelido limpo
+  - var-assign: [clean_nick, "$user_nickname"]
+  - var-replace:
+      var_name: clean_nick
+      strings: ['!', '"', '#', '$', '%', '&', "'", '(', ')', '*', '+', ',', '-', '.', '/']
+      substring: ''
+  - compare: ["$clean_nick", "==", "$original_nick"]
+  - if-true:
+      - set-user-nickname: "$user_name"
+      - notify-staff: "User $user ($user_id) nickname '$original_nick' matched hoisting regex but wasn't cleaned by var-replace list. Reset to username."
+  - if-false:
+      - compare: ["$clean_nick", "==", ""]
+      - if-true:
+          - set-user-nickname: "$user_name"
+          - notify-staff: "User $user ($user_id) nickname '$original_nick' resulted in empty string after cleaning hoisting chars. Reset to username."
+      - if-false:
+          - set-user-nickname: "$clean_nick"
+          - notify-staff: "User $user ($user_id) nickname '$original_nick' auto-cleaned to '$clean_nick'."
+
+
+
+
+
+-def wd add
+name: anti-capslock-escalating
+rank: 2
 event: on-message
 if:
-  - message-matches-regex: "[A-Z]{10,}"
+  - message-matches-regex: '[A-Z]{7,}'
+  - is-staff: false
 do:
+  - add-custom-heatpoint: ["caps-$user_id", "1 hour"]
+  - custom-heat-is: ["caps-$user_id", 1]
+  - if-true:
+      - send-message:
+          id: $channel_id
+          content: "$user_mention, pare de gritar! 😡"
+  - custom-heat-is: ["caps-$user_id", 2]
+  - if-true:
+      - send-message:
+          id: $channel_id
+          content: "$user_mention, Frogus não gosta quando as pessoas gritam porque perturba os sons da natureza"
+  - custom-heat-is: ["caps-$user_id", 3]
+  - if-true:
+      - timeout-user: "5 minutes"
+      - send-message:
+          id: $channel_id
+          content: "$user_mention foi silenciado por 5 minutos por perturbar a paz do frogus."
+      - notify-staff: "User $user ($user_id) timed out for 5 minutes due to excessive caps use in $channel_mention."
+      - empty-custom-heat: "caps-$user_id"
+
+
+
+-def wd add
+name: content-filter
+rank: 1
+event: on-message
+if:
+  - message-matches-any: ["*david1*", "*david2*", "*david3*"]
+do:
+  - delete-user-message:
+  - add-user-heatpoint: 6 hours
+  - user-heat-is: 1
+  - if-true:
+    - send-message: [$channel_id, "$user_mention Por favor, evite usar esse nome."]
+  - user-heat-is: 2
+  - if-true:
+    - timeout-user: 30 minutes
+    - notify-staff: "User $user has been timed out for repeated use of filtered words"
+  - user-heat-more-than: 2
+  - if-true:
+    - ban-user-and-delete: 1
+    - notify-staff: "Usuário $user banido por várias violações do servidor"
+
+
+
+
+-def wd add
+name: giveaway-entry
+rank: 1
+event: on-message
+if:
+  - channel-matches-any: ["giveaway-signup"]
+  - message-matches-any: ["*entrar*", "*participar*", "*polar*"]
+  - if-not:
+    - user-has-any-role-in: ["Giveaway"]
+do:
+  - add-roles-to-user: ["Giveaway"]
+  - send-message: [$channel_id, "$user_mention Você foi adicionado ao sorteio! Boa sorte!"]
+  - delete-last-message-sent-after: 10 seconds
+
+
+
+
+-def wd add
+name: magic-8ball
+rank: 1
+event: on-message
+if:
+  - message-matches-any: ["!8ball *", "!askfrogus *"]
+  - custom-heat-is: ["8ball-$user_id", 0]
+do:
+  - add-custom-heatpoint: ["8ball-$user_id", "5 minutes"]
+  - var-assign-random:
+      var_name: eight_ball_response
+      choices: [
+          "Sim.", "Não.", "Sem dúvidas.", "Sim - definitivamente.",
+          "Você pode confiar nisso.", "Provavelmente.", "Sinais apontam para sim.",
+          "Resposta nebulosa, tente novamente.", "Pergunte novamente mais tarde.",
+          "Melhor não te responder agora...", "Não pude prever agora.",
+          "Concentre-se e pergunte novamente.", "Não conte com isso...",
+          "Minha resposta é não.", "Minhas fontes dizem não.",
+          "As aparencias não são tão boas.", "Muito duvidoso.",
+          "Sim, se Tacorilla quiser",
+          "Não... Quero dizer sim... Bem... Pergunte novamente mais tarde",
+          "A resposta não está clara... Sério, eu verifiquei duas vezes",
+          "Eu não vou responder isso, mas Zcotticus vai",
+          "É um cara ou coroa, na verdade...",
+          "Sim, ele vai... Desculpe, eu não estava realmente prestando atenção",
+          "Eu poderia te dizer, mas eu teria que te banir permanentemente",
+          "Sim, Não, Talvez... Eu não sei, você poderia repetir a pergunta?",
+          "Se você acha que eu vou responder isso, você claramente está me confundindo com Xanbot.",
+          "Você REALMENTE quer que eu responda isso? OK... Talvez ",
+          "SimNãoSimNãoSimNãoSimNãoSimNão ",
+          "Faça essa pergunta para você mesmo no espelho três vezes, a resposta ficará clara ",
+          "Você quer uma resposta? OK, aqui está sua resposta: "
+        ]
   - send-message:
       id: $channel_id
-      content: "$user_mention, pare de gritar! 😡"
+      description: "🎱 $user_mention, A Bola 8 Mágica diz: **$eight_ball_response**"
+      color: 0x2A2D31
+      footer_text: "Use com moderação!"
+      add_timestamp: true
+
+
+-def wd add
+name: coin-flip
+rank: 1
+event: [on-message, on-message-edit]
+if:
+  - message-matches-any: ["!flip", "!coinflip"]
+  - custom-heat-is: ["coinflip-$user_id", 0]
+do:
+  - add-custom-heatpoint: ["coinflip-$user_id", "5 minutes"]
+  - var-assign-random:
+      var_name: coin_side
+      choices: ["Cara", "Coroa"]
+  - send-message: [$channel_id, "$user_mention virou uma moeda e pegou: **$coin_side**!"]
+
+
+-def wd add
+name: dice-roll
+rank: 1
+event: [on-message, on-message-edit]
+if:
+  - message-matches-any: ["!roll", "!dado"]
+  - custom-heat-is: ["roll-$user_id", 0]
+do:
+  - add-custom-heatpoint: ["roll-$user_id", "5 minutes"]
+  - var-assign-random:
+      var_name: roll_result
+      choices: ["1", "2", "3", "4", "5", "6"]
+  - send-message: [$channel_id, "$user_mention rolou o dado: 🎲 **$roll_result**!"]
+
+
+
+
+improve the following to prevent members to add ghost on their name except the 5 family members by their discord id
+-def wd add
+name: prevent-staff-ghost
+rank: 2
+event: [on-user-join, periodic, manual]
+run-every: 30 minutes
+if:
+  - is-staff: false
+  - display-name-matches-any: ["*Admin*", "*Staff*", "*Moderator*", "*Xiao*", "*Ghost*", "*GHOST*"]
+  - if-not:
+    - user-id-matches-any: [
+              1354487189609648400,
+              672141368579063809,
+              1272403823406743666,
+              720360237709656295,
+              1273584343989882935,
+              1044294587419721768
+            ]
+do:
+  - set-user-nickname: "$user_name"
+  - send-message:
+      id: 1284236876768608376
+      content: "$user_mention Seu nick foi redefinido porque parecia personificar a staff ou a familia Ghost."
+  - notify-staff: "User $user ($user_id) teve o nick '$user_display' redefinido por suspeita de personificação da staff."
